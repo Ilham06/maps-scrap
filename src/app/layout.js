@@ -1,27 +1,29 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const mono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata = {
-  title: "WFC Cafe Finder — Temukan Cafe Unik di Kotamu",
+  title: "WFC Cafe Finder",
   description:
-    "Bosen WFC di cafe yang itu-itu aja? Temukan cafe unik dan hidden gem di kotamu dengan AI-powered vibe descriptions dan WFC score.",
+    "Bosen WFC di cafe yang itu-itu aja? Temukan cafe hidden gem di kotamu.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html
       lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

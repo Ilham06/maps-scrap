@@ -1,21 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
 export default function EmptyState({ onReset, message }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="text-6xl mb-4">&#9749;</div>
-      <h3 className="text-lg font-semibold mb-2">
-        {message || "Tidak ada cafe dengan filter ini"}
+    <div className="flex flex-col items-center justify-center py-12 text-center bg-card border border-border rounded-2xl">
+      <p className="text-3xl mb-3 opacity-40">~</p>
+      <h3 className="text-sm font-medium mb-1">
+        {message || "ga nemu yang cocok, nih"}
       </h3>
-      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-        Coba ubah filter mood atau sort untuk menemukan cafe yang cocok
+      <p className="text-xs text-muted-foreground mb-4 max-w-xs leading-relaxed">
+        coba kata kunci lain, atau reset biar tampil semua
       </p>
       {onReset && (
-        <Button variant="outline" onClick={onReset}>
-          Reset Filter
-        </Button>
+        <button
+          onClick={onReset}
+          className="text-xs font-semibold text-primary hover:underline underline-offset-4 cursor-pointer"
+        >
+          tampilkan semua &rarr;
+        </button>
       )}
     </div>
   );

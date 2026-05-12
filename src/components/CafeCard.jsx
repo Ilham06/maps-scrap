@@ -1,114 +1,96 @@
 "use client";
 
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-
 export default function CafeCard({ cafe }) {
-  const moodTags = Array.isArray(cafe.moodTags)
-    ? cafe.moodTags
-    : [];
+  const moodTags = Array.isArray(cafe.moodTags) ? cafe.moodTags : [];
 
   const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
     cafe.name + " " + cafe.city
   )}`;
 
-  return (
-    <Card className="flex flex-col h-full transition-shadow hover:shadow-lg">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-bold leading-tight">{cafe.name}</h3>
-          {cafe.uniquenessScore >= 70 && (
-            <Badge variant="secondary" className="shrink-0 text-xs">
-              Unik Pick
-            </Badge>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1.5 mt-1.5">
-          {moodTags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardHeader>
+  function formatDistance(km) {
+    if (km == null) return null;
+    return km < 1 ? `${Math.round(km * 1000)}m` : `${km} km`;
+  }
 
-      <CardContent className="flex-1 space-y-3 pb-3">
+  const distance = formatDistance(cafe.distanceKm);
+
+  return (
+    <a
+      href={mapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block rounded-2xl bg-card border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-foreground/15 hover:-translate-y-0.5"
+    >
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-2 mb-2.5">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-[15px] leading-snug truncate group-hover:text-primary transition-colors">
+            {cafe.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+            {cafe.rating && <span>{cafe.rating.toFixed(1)} \u2605</span>}
+            {cafe.reviewCount && <span>\u00b7 {cafe.reviewCount}</span>}
+            {distance && <span className="text-primary font-medium">\u00b7 {distance}</span>}
+          </div>
+        </div>
         {cafe.wfcScore != null && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">WFC Score</span>
-              <span className="text-muted-foreground">{cafe.wfcScore}/100</span>
-            </div>
-            <Progress value={cafe.wfcScore} className="h-2" />
+          <div className="shrink-0 h-10 w-10 rounded-lg bg-warm flex flex-col items-center justify-center">
+            <span className="text-sm font-bold leading-none text-primary">{cafe.wfcScore}</span>
+            <span className="text-[8px] text-muted-foreground font-medium">wfc</span>
           </div>
         )}
+      </div>
 
-        <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-          {cafe.rating && (
-            <span className="flex items-center gap-1">
-              <span className="text-yellow-500">&#9733;</span>
-              {cafe.rating.toFixed(1)}
+      {/* Tags */}
+      {(moodTags.length > 0 || cafe.uniquenessScore >= 70) && (
+        <div className="flex flex-wrap gap-1 mb-2.5">
+          {moodTags.map((tag) => (
+            <span key={tag} className="px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground text-[10px]">
+              {tag}
             </span>
-          )}
-          {cafe.reviewCount && (
-            <span>({cafe.reviewCount} review)</span>
-          )}
-          {cafe.distanceKm != null && (
-            <span className="flex items-center gap-1 text-primary font-medium">
-              &#128205; {cafe.distanceKm < 1
-                ? `${Math.round(cafe.distanceKm * 1000)}m`
-                : `${cafe.distanceKm} km`}
+          ))}
+          {cafe.uniquenessScore >= 70 && (
+            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold">
+              unik pick
             </span>
           )}
         </div>
+      )}
 
-        {cafe.aiReason && (
-          <p className="text-sm bg-primary/5 border border-primary/20 rounded-md px-2.5 py-1.5 leading-relaxed">
-            <span className="font-medium">&#129302; </span>
-            {cafe.aiReason}
-          </p>
-        )}
+      {/* AI reason */}
+      {cafe.aiReason && (
+        <p className="text-[13px] leading-relaxed mb-2.5 bg-warm rounded-lg px-3 py-2 text-warm-foreground">
+          {cafe.aiReason}
+        </p>
+      )}
 
-        {cafe.vibeDescription && (
-          <p className="text-sm italic text-muted-foreground leading-relaxed">
-            &ldquo;{cafe.vibeDescription}&rdquo;
-          </p>
-        )}
+      {/* Vibe */}
+      {cafe.vibeDescription && !cafe.aiReason && (
+        <p className="text-[13px] text-muted-foreground leading-relaxed mb-2.5 bg-muted/50 rounded-lg px-3 py-2 italic">
+          &ldquo;{cafe.vibeDescription}&rdquo;
+        </p>
+      )}
 
-        {cafe.highlightFeature && (
-          <p className="text-sm">
-            <span className="font-medium">Highlight:</span>{" "}
-            {cafe.highlightFeature}
-          </p>
-        )}
+      {/* Highlight */}
+      {cafe.highlightFeature && (
+        <p className="text-[11px] text-muted-foreground mb-1.5">
+          \u2192 {cafe.highlightFeature}
+        </p>
+      )}
 
-        {cafe.warningFlag && (
-          <Badge variant="destructive" className="text-xs">
-            {cafe.warningFlag}
-          </Badge>
-        )}
+      {/* Warning */}
+      {cafe.warningFlag && (
+        <p className="text-[11px] text-destructive/80 mb-1.5">
+          heads up: {cafe.warningFlag}
+        </p>
+      )}
 
-        {cafe.address && (
-          <p className="text-xs text-muted-foreground truncate" title={cafe.address}>
-            {cafe.address}
-          </p>
-        )}
-      </CardContent>
-
-      <CardFooter className="pt-0">
-        <Button variant="outline" size="sm" className="w-full" asChild>
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-            Buka di Google Maps
-          </a>
-        </Button>
-      </CardFooter>
-    </Card>
+      {/* Address */}
+      {cafe.address && (
+        <p className="text-[10px] text-muted-foreground/50 truncate mt-2 pt-2 border-t border-border/50" title={cafe.address}>
+          {cafe.address}
+        </p>
+      )}
+    </a>
   );
 }

@@ -1,26 +1,33 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { SUPPORTED_CITIES } from "@/lib/constants";
 
 export default function CitySelector({ activeCity }) {
   const router = useRouter();
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {SUPPORTED_CITIES.map((city) => (
-        <Button
-          key={city.id}
-          variant={activeCity === city.id ? "default" : "outline"}
-          size="sm"
-          className="shrink-0 rounded-full px-4"
-          onClick={() => router.push(`/results/${city.id}`)}
-        >
-          <span className="mr-1.5">{city.emoji}</span>
-          {city.label}
-        </Button>
-      ))}
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {SUPPORTED_CITIES.map((city) => {
+        const isActive = activeCity === city.id;
+        return (
+          <button
+            key={city.id}
+            onClick={() => router.push(`/results/${city.id}`)}
+            className={`
+              shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm
+              transition-all duration-150 cursor-pointer
+              ${isActive
+                ? "bg-foreground text-background font-medium shadow-sm"
+                : "bg-card border border-border hover:border-foreground/20 hover:shadow-sm text-foreground/80"
+              }
+            `}
+          >
+            <span className="text-base leading-none">{city.emoji}</span>
+            <span>{city.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
