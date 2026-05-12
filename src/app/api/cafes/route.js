@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCached, setCache, buildCacheKey, isLocked } from "@/lib/redis";
 import { filterByMood, sortCafes } from "@/lib/filter";
+import { addDistanceToCafes, sortByDistance } from "@/lib/geo";
 import { SUPPORTED_CITIES } from "@/lib/constants";
 
 export async function GET(request) {
@@ -10,6 +11,8 @@ export async function GET(request) {
   const mood = searchParams.get("mood");
   const sort = searchParams.get("sort") || "unique";
   const limit = parseInt(searchParams.get("limit") || "20");
+  const userLat = searchParams.get("lat") ? parseFloat(searchParams.get("lat")) : null;
+  const userLng = searchParams.get("lng") ? parseFloat(searchParams.get("lng")) : null;
 
   if (!city) {
     return NextResponse.json({ error: "city parameter is required" }, { status: 400 });
@@ -20,7 +23,8 @@ export async function GET(request) {
     return NextResponse.json({ error: "unsupported city" }, { status: 400 });
   }
 
-  const cacheKey = buildCacheKey(city, mood, sort);
+  const hasLocation = userLat != null && userLng != null;
+  const cacheKey = buildCacheKey(city, mood, sort + (hasLocation ? `:${userLat},${userLng}` : ""));
   const cached = await getCached(cacheKey);
   if (cached) {
     return NextResponse.json(cached);
@@ -32,7 +36,17 @@ export async function GET(request) {
   });
 
   let filtered = filterByMood(cafes, mood);
-  filtered = sortCafes(filtered, sort);
+
+  if (hasLocation) {
+    filtered = addDistanceToCafes(filtered, userLat, userLng);
+  }
+
+  if (sort === "nearest" && hasLocation) {
+    filtered = sortByDistance(filtered);
+  } else {
+    filtered = sortCafes(filtered, sort);
+  }
+
   filtered = filtered.slice(0, limit);
 
   const scrapeLog = await prisma.scrapeLog.findFirst({
@@ -48,6 +62,7 @@ export async function GET(request) {
     cafes: filtered.map((cafe) => ({
       ...cafe,
       moodTags: cafe.moodTags ? JSON.parse(cafe.moodTags) : [],
+      distanceKm: cafe.distanceKm ?? null,
     })),
     lastUpdated: scrapeLog?.scrapedAt?.toISOString() || null,
     scrapingInProgress,

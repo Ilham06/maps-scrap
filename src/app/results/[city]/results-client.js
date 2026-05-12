@@ -8,6 +8,7 @@ import CafeCard from "@/components/CafeCard";
 import LoadingState from "@/components/LoadingState";
 import EmptyState from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import useGeolocation from "@/hooks/useGeolocation";
 
 export default function ResultsClient({ city, cityData }) {
   const [cafes, setCafes] = useState([]);
@@ -15,8 +16,20 @@ export default function ResultsClient({ city, cityData }) {
   const [scrapingInProgress, setScrapingInProgress] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [mood, setMood] = useState(null);
-  const [sort, setSort] = useState("unique");
+  const [sort, setSort] = useState("nearest");
   const [error, setError] = useState(null);
+
+  const {
+    location,
+    loading: locationLoading,
+    error: locationError,
+    requestLocation,
+  } = useGeolocation();
+
+  // Auto-request location on mount for default "nearest" sort
+  useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
 
   const fetchCafes = useCallback(async () => {
     setLoading(true);
@@ -26,6 +39,11 @@ export default function ResultsClient({ city, cityData }) {
       const params = new URLSearchParams({ city });
       if (mood) params.set("mood", mood);
       params.set("sort", sort);
+
+      if (location) {
+        params.set("lat", location.lat.toString());
+        params.set("lng", location.lng.toString());
+      }
 
       const res = await fetch(`/api/cafes?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -39,7 +57,7 @@ export default function ResultsClient({ city, cityData }) {
     } finally {
       setLoading(false);
     }
-  }, [city, mood, sort]);
+  }, [city, mood, sort, location]);
 
   const triggerScrape = async () => {
     try {
@@ -71,7 +89,7 @@ export default function ResultsClient({ city, cityData }) {
 
   const resetFilters = () => {
     setMood(null);
-    setSort("unique");
+    setSort("nearest");
   };
 
   return (
@@ -117,6 +135,12 @@ export default function ResultsClient({ city, cityData }) {
           </div>
         )}
 
+        {locationError && (
+          <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm text-center">
+            {locationError}
+          </div>
+        )}
+
         {/* Filters */}
         <FilterBar
           activeMood={mood}
@@ -124,6 +148,9 @@ export default function ResultsClient({ city, cityData }) {
           onMoodChange={setMood}
           onSortChange={setSort}
           totalCount={cafes.length}
+          hasLocation={!!location}
+          onRequestLocation={requestLocation}
+          locationLoading={locationLoading}
         />
 
         {/* Results */}

@@ -10,7 +10,19 @@ export default function FilterBar({
   onMoodChange,
   onSortChange,
   totalCount,
+  hasLocation,
+  onRequestLocation,
+  locationLoading,
 }) {
+  function handleSortClick(option) {
+    if (option.requiresLocation && !hasLocation) {
+      onRequestLocation?.();
+      onSortChange(option.id);
+      return;
+    }
+    onSortChange(option.id);
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -39,17 +51,23 @@ export default function FilterBar({
 
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5">
-          {SORT_OPTIONS.map((option) => (
-            <Button
-              key={option.id}
-              variant={activeSort === option.id ? "secondary" : "ghost"}
-              size="sm"
-              className="text-xs"
-              onClick={() => onSortChange(option.id)}
-            >
-              {option.label}
-            </Button>
-          ))}
+          {SORT_OPTIONS.map((option) => {
+            const isDisabled = option.requiresLocation && locationLoading;
+            return (
+              <Button
+                key={option.id}
+                variant={activeSort === option.id ? "secondary" : "ghost"}
+                size="sm"
+                className="text-xs"
+                disabled={isDisabled}
+                onClick={() => handleSortClick(option)}
+              >
+                {option.requiresLocation && "📍 "}
+                {option.label}
+                {option.requiresLocation && locationLoading && "..."}
+              </Button>
+            );
+          })}
         </div>
         <span className="text-sm text-muted-foreground">
           {totalCount} cafe ditemukan

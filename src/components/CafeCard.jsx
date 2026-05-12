@@ -50,7 +50,7 @@ export default function CafeCard({ cafe }) {
           </div>
         )}
 
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
           {cafe.rating && (
             <span className="flex items-center gap-1">
               <span className="text-yellow-500">&#9733;</span>
@@ -59,6 +59,13 @@ export default function CafeCard({ cafe }) {
           )}
           {cafe.reviewCount && (
             <span>({cafe.reviewCount} review)</span>
+          )}
+          {cafe.distanceKm != null && (
+            <span className="flex items-center gap-1 text-primary font-medium">
+              &#128205; {cafe.distanceKm < 1
+                ? `${Math.round(cafe.distanceKm * 1000)}m`
+                : `${cafe.distanceKm} km`}
+            </span>
           )}
         </div>
 

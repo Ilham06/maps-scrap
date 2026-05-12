@@ -62,7 +62,19 @@ async function scrapeGoogleMapsQuery(page, query) {
 
         const isOpen = textContent.includes("Buka") || textContent.includes("Open");
 
-        items.push({ name, rating, reviewCount, address, isOpen });
+        let latitude = null;
+        let longitude = null;
+        const link = el.querySelector("a[href*='maps/place']");
+        if (link) {
+          const href = link.getAttribute("href") || "";
+          const coordMatch = href.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+          if (coordMatch) {
+            latitude = parseFloat(coordMatch[1]);
+            longitude = parseFloat(coordMatch[2]);
+          }
+        }
+
+        items.push({ name, rating, reviewCount, address, isOpen, latitude, longitude });
       }
       return items;
     });

@@ -44,6 +44,7 @@ export const SORT_OPTIONS = [
   { id: "unique", label: "Paling Unik" },
   { id: "rating", label: "Rating Tertinggi" },
   { id: "wfc", label: "WFC Score" },
+  { id: "nearest", label: "Terdekat", requiresLocation: true },
 ];
 
 export const UNIQUE_WORDS = [

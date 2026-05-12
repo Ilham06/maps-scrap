@@ -14,6 +14,8 @@ model Cafe {
   rating           Float?
   reviewCount      Int?
   address          String?
+  latitude         Float?
+  longitude        Float?
   isOpen           Boolean?
   uniquenessScore  Int?
   wfcScore         Int?
