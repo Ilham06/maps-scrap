@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import CitySelector from "@/components/CitySelector";
-import FilterBar from "@/components/FilterBar";
+import AiSearchBar from "@/components/AiSearchBar";
 import CafeCard from "@/components/CafeCard";
 import LoadingState from "@/components/LoadingState";
 import EmptyState from "@/components/EmptyState";
@@ -13,11 +13,12 @@ import useGeolocation from "@/hooks/useGeolocation";
 export default function ResultsClient({ city, cityData }) {
   const [cafes, setCafes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
   const [scrapingInProgress, setScrapingInProgress] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [mood, setMood] = useState(null);
-  const [sort, setSort] = useState("nearest");
   const [error, setError] = useState(null);
+  const [aiMessage, setAiMessage] = useState(null);
+  const [activeQuery, setActiveQuery] = useState(null);
 
   const {
     location,
@@ -26,20 +27,16 @@ export default function ResultsClient({ city, cityData }) {
     requestLocation,
   } = useGeolocation();
 
-  // Auto-request location on mount for default "nearest" sort
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
 
-  const fetchCafes = useCallback(async () => {
+  const fetchAllCafes = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({ city });
-      if (mood) params.set("mood", mood);
-      params.set("sort", sort);
-
+      const params = new URLSearchParams({ city, sort: "nearest" });
       if (location) {
         params.set("lat", location.lat.toString());
         params.set("lng", location.lng.toString());
@@ -57,7 +54,38 @@ export default function ResultsClient({ city, cityData }) {
     } finally {
       setLoading(false);
     }
-  }, [city, mood, sort, location]);
+  }, [city, location]);
+
+  const handleAiSearch = async (query) => {
+    setAiLoading(true);
+    setError(null);
+    setAiMessage(null);
+    setActiveQuery(query);
+
+    try {
+      const body = { city, query };
+      if (location) {
+        body.lat = location.lat;
+        body.lng = location.lng;
+      }
+
+      const res = await fetch("/api/cafes/ai-filter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error("AI filter gagal");
+
+      const data = await res.json();
+      setCafes(data.cafes || []);
+      setAiMessage(data.aiMessage || null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const triggerScrape = async () => {
     try {
@@ -70,31 +98,35 @@ export default function ResultsClient({ city, cityData }) {
 
       if (data.status === "started") {
         setScrapingInProgress(true);
-        setTimeout(fetchCafes, 5000);
+        setTimeout(fetchAllCafes, 5000);
       }
     } catch {
-      // Ignore trigger errors
+      // Ignore
     }
   };
 
+  const resetToAll = () => {
+    setActiveQuery(null);
+    setAiMessage(null);
+    fetchAllCafes();
+  };
+
   useEffect(() => {
-    fetchCafes();
-  }, [fetchCafes]);
+    if (!activeQuery) {
+      fetchAllCafes();
+    }
+  }, [fetchAllCafes, activeQuery]);
 
   useEffect(() => {
     if (!scrapingInProgress) return;
-    const interval = setInterval(fetchCafes, 10000);
+    const interval = setInterval(fetchAllCafes, 10000);
     return () => clearInterval(interval);
-  }, [scrapingInProgress, fetchCafes]);
+  }, [scrapingInProgress, fetchAllCafes]);
 
-  const resetFilters = () => {
-    setMood(null);
-    setSort("nearest");
-  };
+  const isLoading = loading || aiLoading;
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
@@ -111,9 +143,7 @@ export default function ResultsClient({ city, cityData }) {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* City Title */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">
             {cityData.emoji} Cafe di {cityData.label}
@@ -141,28 +171,43 @@ export default function ResultsClient({ city, cityData }) {
           </div>
         )}
 
-        {/* Filters */}
-        <FilterBar
-          activeMood={mood}
-          activeSort={sort}
-          onMoodChange={setMood}
-          onSortChange={setSort}
-          totalCount={cafes.length}
-          hasLocation={!!location}
-          onRequestLocation={requestLocation}
-          locationLoading={locationLoading}
+        <AiSearchBar
+          onSearch={handleAiSearch}
+          loading={aiLoading}
+          aiMessage={aiMessage}
         />
 
-        {/* Results */}
-        {loading ? (
+        {activeQuery && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Hasil AI untuk: <span className="font-medium text-foreground">&ldquo;{activeQuery}&rdquo;</span>
+              {" "}&middot; {cafes.length} cafe
+            </p>
+            <Button variant="ghost" size="sm" onClick={resetToAll}>
+              Tampilkan semua
+            </Button>
+          </div>
+        )}
+
+        {!activeQuery && !isLoading && cafes.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {cafes.length} cafe ditemukan &middot; urutkan berdasarkan {location ? "jarak terdekat" : "keunikan"}
+          </p>
+        )}
+
+        {isLoading ? (
           <LoadingState />
         ) : error ? (
-          <EmptyState
-            message="Gagal memuat data cafe"
-            onReset={fetchCafes}
-          />
+          <EmptyState message="Gagal memuat data cafe" onReset={resetToAll} />
         ) : cafes.length === 0 ? (
-          <EmptyState onReset={resetFilters} />
+          <EmptyState
+            message={
+              activeQuery
+                ? "AI tidak menemukan cafe yang cocok dengan request kamu"
+                : "Belum ada data cafe. Coba refresh data dulu."
+            }
+            onReset={resetToAll}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {cafes.map((cafe) => (

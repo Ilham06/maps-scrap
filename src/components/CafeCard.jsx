@@ -69,6 +69,13 @@ export default function CafeCard({ cafe }) {
           )}
         </div>
 
+        {cafe.aiReason && (
+          <p className="text-sm bg-primary/5 border border-primary/20 rounded-md px-2.5 py-1.5 leading-relaxed">
+            <span className="font-medium">&#129302; </span>
+            {cafe.aiReason}
+          </p>
+        )}
+
         {cafe.vibeDescription && (
           <p className="text-sm italic text-muted-foreground leading-relaxed">
             &ldquo;{cafe.vibeDescription}&rdquo;
