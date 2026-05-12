@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Cafe {
+  id               Int      @id @default(autoincrement())
+  name             String
+  city             String
+  rating           Float?
+  reviewCount      Int?
+  address          String?
+  isOpen           Boolean?
+  uniquenessScore  Int?
+  wfcScore         Int?
+  vibeDescription  String?
+  moodTags         String?
+  highlightFeature String?
+  warningFlag      String?
+  aiAnalyzed       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([name, city])
+  @@index([city])
+  @@index([city, wfcScore])
+  @@index([city, uniquenessScore])
+}
+
+model ScrapeLog {
+  id        Int      @id @default(autoincrement())
+  city      String
+  cafeCount Int
+  scrapedAt DateTime @default(now())
+
+  @@index([city])
+}
