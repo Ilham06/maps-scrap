@@ -1,14 +1,28 @@
 export const SUPPORTED_CITIES = [
-  { id: "jakarta", label: "Jakarta", emoji: "\u{1F3D9}\u{FE0F}" },
-  { id: "bandung", label: "Bandung", emoji: "\u{1F338}" },
-  { id: "jogja", label: "Yogyakarta", emoji: "\u{1F3DB}\u{FE0F}" },
-  { id: "surabaya", label: "Surabaya", emoji: "\u{1F30A}" },
-  { id: "bali", label: "Bali", emoji: "\u{1F334}" },
-  { id: "malang", label: "Malang", emoji: "\u{1F3D4}\u{FE0F}" },
-  { id: "semarang", label: "Semarang", emoji: "\u{1F306}" },
-  { id: "medan", label: "Medan", emoji: "\u2615" },
-  { id: "makassar", label: "Makassar", emoji: "\u{1F305}" },
+  { id: "jakarta", label: "Jakarta" },
+  { id: "bandung", label: "Bandung" },
+  { id: "jogja", label: "Yogyakarta" },
+  { id: "surabaya", label: "Surabaya" },
+  { id: "bali", label: "Bali" },
+  { id: "malang", label: "Malang" },
+  { id: "semarang", label: "Semarang" },
+  { id: "medan", label: "Medan" },
+  { id: "makassar", label: "Makassar" },
 ];
+
+export function cityToSlug(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
+export function getCityData(slug) {
+  const known = SUPPORTED_CITIES.find((c) => c.id === slug);
+  if (known) return known;
+  const label = slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  return { id: slug, label };
+}
 
 export const EXCLUDED_CHAINS = [
   "starbucks",

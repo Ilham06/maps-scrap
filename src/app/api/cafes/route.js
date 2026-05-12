@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 import { getCached, setCache, buildCacheKey, isLocked } from "@/lib/redis";
 import { filterByMood, sortCafes } from "@/lib/filter";
 import { addDistanceToCafes, sortByDistance } from "@/lib/geo";
-import { SUPPORTED_CITIES } from "@/lib/constants";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -16,11 +15,6 @@ export async function GET(request) {
 
   if (!city) {
     return NextResponse.json({ error: "city parameter is required" }, { status: 400 });
-  }
-
-  const validCity = SUPPORTED_CITIES.find((c) => c.id === city);
-  if (!validCity) {
-    return NextResponse.json({ error: "unsupported city" }, { status: 400 });
   }
 
   const hasLocation = userLat != null && userLng != null;

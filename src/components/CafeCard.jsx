@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { Star, MapPin, Sparkles } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -20,7 +22,18 @@ export default function CafeCard({ cafe }) {
   )}`;
 
   return (
-    <Card className="flex flex-col h-full transition-shadow hover:shadow-lg">
+    <Card className="flex flex-col h-full transition-shadow hover:shadow-lg overflow-hidden">
+      {cafe.photoUrl && (
+        <div className="relative w-full h-44 shrink-0">
+          <Image
+            src={cafe.photoUrl}
+            alt={cafe.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-lg font-bold leading-tight">{cafe.name}</h3>
@@ -53,7 +66,7 @@ export default function CafeCard({ cafe }) {
         <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
           {cafe.rating && (
             <span className="flex items-center gap-1">
-              <span className="text-yellow-500">&#9733;</span>
+              <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
               {cafe.rating.toFixed(1)}
             </span>
           )}
@@ -62,7 +75,7 @@ export default function CafeCard({ cafe }) {
           )}
           {cafe.distanceKm != null && (
             <span className="flex items-center gap-1 text-primary font-medium">
-              &#128205; {cafe.distanceKm < 1
+              <MapPin className="h-3.5 w-3.5" /> {cafe.distanceKm < 1
                 ? `${Math.round(cafe.distanceKm * 1000)}m`
                 : `${cafe.distanceKm} km`}
             </span>
@@ -71,7 +84,7 @@ export default function CafeCard({ cafe }) {
 
         {cafe.aiReason && (
           <p className="text-sm bg-primary/5 border border-primary/20 rounded-md px-2.5 py-1.5 leading-relaxed">
-            <span className="font-medium">&#129302; </span>
+            <Sparkles className="h-3.5 w-3.5 inline-flex text-primary mr-1 shrink-0" />
             {cafe.aiReason}
           </p>
         )}

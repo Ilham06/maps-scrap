@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import prisma from "@/lib/prisma";
 import { addDistanceToCafes } from "@/lib/geo";
-import { SUPPORTED_CITIES } from "@/lib/constants";
+import { getCityData } from "@/lib/constants";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -17,10 +17,7 @@ export async function POST(request) {
     );
   }
 
-  const validCity = SUPPORTED_CITIES.find((c) => c.id === city.toLowerCase());
-  if (!validCity) {
-    return NextResponse.json({ error: "unsupported city" }, { status: 400 });
-  }
+  const cityData = getCityData(city.toLowerCase());
 
   let cafes = await prisma.cafe.findMany({
     where: { city: city.toLowerCase() },
@@ -29,7 +26,7 @@ export async function POST(request) {
   if (cafes.length === 0) {
     return NextResponse.json({
       cafes: [],
-      aiMessage: `Belum ada data cafe di ${validCity.label}. Coba refresh data dulu.`,
+      aiMessage: `Belum ada data cafe di ${cityData.label}. Coba refresh data dulu.`,
     });
   }
 
@@ -56,7 +53,7 @@ export async function POST(request) {
 
   const prompt = `Kamu adalah WFC Cafe Finder AI — asisten pencari cafe untuk remote workers di Indonesia.
 
-User sedang mencari cafe di ${validCity.label} dan bilang:
+User sedang mencari cafe di ${cityData.label} dan bilang:
 "${query}"
 
 Berikut daftar cafe yang tersedia (format JSON):

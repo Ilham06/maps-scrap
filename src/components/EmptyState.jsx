@@ -1,11 +1,14 @@
 "use client";
 
+import { Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function EmptyState({ onReset, message }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="text-6xl mb-4">&#9749;</div>
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted mb-4">
+        <Coffee className="h-8 w-8 text-muted-foreground/60" />
+      </div>
       <h3 className="text-lg font-semibold mb-2">
         {message || "Tidak ada cafe dengan filter ini"}
       </h3>

@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { MOOD_TAGS, SORT_OPTIONS } from "@/lib/constants";
@@ -62,7 +63,7 @@ export default function FilterBar({
                 disabled={isDisabled}
                 onClick={() => handleSortClick(option)}
               >
-                {option.requiresLocation && "📍 "}
+                {option.requiresLocation && <MapPin className="h-3 w-3 mr-1 inline-flex" />}
                 {option.label}
                 {option.requiresLocation && locationLoading && "..."}
               </Button>

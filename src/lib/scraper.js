@@ -74,7 +74,18 @@ async function scrapeGoogleMapsQuery(page, query) {
           }
         }
 
-        items.push({ name, rating, reviewCount, address, isOpen, latitude, longitude });
+        let photoUrl = null;
+        const imgEls = Array.from(el.querySelectorAll("img[src]"));
+        const photoEl = imgEls.find((img) => {
+          const src = img.src || "";
+          return (
+            src.includes("googleusercontent") ||
+            (src.startsWith("https://") && img.naturalWidth >= 100)
+          );
+        });
+        if (photoEl) photoUrl = photoEl.src;
+
+        items.push({ name, rating, reviewCount, address, isOpen, latitude, longitude, photoUrl });
       }
       return items;
     });

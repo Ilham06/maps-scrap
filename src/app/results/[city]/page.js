@@ -1,11 +1,9 @@
-import { SUPPORTED_CITIES } from "@/lib/constants";
-import { notFound } from "next/navigation";
+import { getCityData } from "@/lib/constants";
 import ResultsClient from "./results-client";
 
 export async function generateMetadata({ params }) {
   const { city } = await params;
-  const cityData = SUPPORTED_CITIES.find((c) => c.id === city);
-  if (!cityData) return { title: "Not Found" };
+  const cityData = getCityData(city);
 
   return {
     title: `Cafe Unik di ${cityData.label} — WFC Cafe Finder`,
@@ -15,11 +13,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ResultsPage({ params }) {
   const { city } = await params;
-  const cityData = SUPPORTED_CITIES.find((c) => c.id === city);
-
-  if (!cityData) {
-    notFound();
-  }
+  const cityData = getCityData(city);
 
   return <ResultsClient city={city} cityData={cityData} />;
 }

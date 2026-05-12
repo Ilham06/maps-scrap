@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Coffee, MapPin, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
-import CitySelector from "@/components/CitySelector";
 import AiSearchBar from "@/components/AiSearchBar";
 import CafeCard from "@/components/CafeCard";
 import LoadingState from "@/components/LoadingState";
 import EmptyState from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import useGeolocation from "@/hooks/useGeolocation";
+import useCredits from "@/hooks/useCredits";
 
 export default function ResultsClient({ city, cityData }) {
+  const { credits, isLoaded: creditsLoaded } = useCredits();
   const [cafes, setCafes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -56,6 +58,18 @@ export default function ResultsClient({ city, cityData }) {
     }
   }, [city, location]);
 
+  // Trigger scrape sekali saat landing — server handle cooldown & lock
+  useEffect(() => {
+    fetch("/api/scraper/trigger", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.status === "started") setScrapingInProgress(true); })
+      .catch(() => {});
+  }, [city]);
+
   const handleAiSearch = async (query) => {
     setAiLoading(true);
     setError(null);
@@ -87,24 +101,6 @@ export default function ResultsClient({ city, cityData }) {
     }
   };
 
-  const triggerScrape = async () => {
-    try {
-      const res = await fetch("/api/scraper/trigger", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city }),
-      });
-      const data = await res.json();
-
-      if (data.status === "started") {
-        setScrapingInProgress(true);
-        setTimeout(fetchAllCafes, 5000);
-      }
-    } catch {
-      // Ignore
-    }
-  };
-
   const resetToAll = () => {
     setActiveQuery(null);
     setAiMessage(null);
@@ -117,51 +113,58 @@ export default function ResultsClient({ city, cityData }) {
     }
   }, [fetchAllCafes, activeQuery]);
 
+  // Poll tiap 10s selama scraping berjalan
   useEffect(() => {
     if (!scrapingInProgress) return;
     const interval = setInterval(fetchAllCafes, 10000);
     return () => clearInterval(interval);
   }, [scrapingInProgress, fetchAllCafes]);
 
-  const isLoading = loading || aiLoading;
+  const showSkeleton = (loading || (scrapingInProgress && !lastUpdated)) && cafes.length === 0;
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <Link href="/" className="text-lg font-bold hover:opacity-80">
-              &#9749; WFC Cafe Finder
+              <Coffee className="h-4 w-4 inline-flex mr-1.5" />WFC Cafe Finder
             </Link>
-            {lastUpdated && (
-              <span className="text-xs text-muted-foreground">
-                Update: {new Date(lastUpdated).toLocaleDateString("id-ID")}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {creditsLoaded && (
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          i < credits ? "bg-primary" : "bg-muted-foreground/25"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{credits}</span>
+                </div>
+              )}
+              {lastUpdated && (
+                <span className="text-xs text-muted-foreground">
+                  Update: {new Date(lastUpdated).toLocaleDateString("id-ID")}
+                </span>
+              )}
+            </div>
           </div>
-          <CitySelector activeCity={city} />
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            {cityData.emoji} Cafe di {cityData.label}
-          </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={triggerScrape}
-            disabled={scrapingInProgress}
-          >
-            {scrapingInProgress ? "Scraping..." : "Refresh Data"}
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold">
+          <MapPin className="h-5 w-5 inline-flex mr-1.5 text-primary" />Cafe di {cityData.label}
+        </h1>
 
-        {scrapingInProgress && (
-          <div className="bg-muted/50 rounded-lg p-3 text-sm text-center">
-            Sedang mencari cafe baru di {cityData.label}... Data akan otomatis
-            terupdate.
+        {scrapingInProgress && cafes.length > 0 && (
+          <div className="flex items-center justify-center gap-2 bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            Scraping cafe baru di {cityData.label}... akan update otomatis
           </div>
         )}
 
@@ -189,14 +192,20 @@ export default function ResultsClient({ city, cityData }) {
           </div>
         )}
 
-        {!activeQuery && !isLoading && cafes.length > 0 && (
+        {!activeQuery && !loading && cafes.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {cafes.length} cafe ditemukan &middot; urutkan berdasarkan {location ? "jarak terdekat" : "keunikan"}
           </p>
         )}
 
-        {isLoading ? (
-          <LoadingState />
+        {showSkeleton ? (
+          <LoadingState
+            message={
+              scrapingInProgress
+                ? `Scraping Google Maps untuk ${cityData.label}...`
+                : null
+            }
+          />
         ) : error ? (
           <EmptyState message="Gagal memuat data cafe" onReset={resetToAll} />
         ) : cafes.length === 0 ? (
@@ -204,15 +213,25 @@ export default function ResultsClient({ city, cityData }) {
             message={
               activeQuery
                 ? "AI tidak menemukan cafe yang cocok dengan request kamu"
-                : "Belum ada data cafe. Coba refresh data dulu."
+                : `Belum ada cafe ditemukan di ${cityData.label}.`
             }
             onReset={resetToAll}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cafes.map((cafe) => (
-              <CafeCard key={cafe.id} cafe={cafe} />
-            ))}
+          <div className="relative">
+            {aiLoading && (
+              <div className="absolute inset-0 z-10 flex items-start justify-center pt-10 pointer-events-none">
+                <div className="flex items-center gap-2 bg-background border shadow-md rounded-full px-4 py-2 text-sm font-medium">
+                  <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+                  Memfilter dengan AI...
+                </div>
+              </div>
+            )}
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity ${aiLoading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+              {cafes.map((cafe) => (
+                <CafeCard key={cafe.id} cafe={cafe} />
+              ))}
+            </div>
           </div>
         )}
       </main>

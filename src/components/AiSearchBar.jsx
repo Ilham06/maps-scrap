@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SUGGESTIONS = [
@@ -56,7 +57,7 @@ export default function AiSearchBar({ onSearch, loading, aiMessage }) {
 
       {aiMessage && (
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
-          <span className="font-medium">&#129302; </span>
+          <Sparkles className="h-3.5 w-3.5 inline-flex text-primary mr-1 shrink-0" />
           {aiMessage}
         </div>
       )}

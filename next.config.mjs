@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**.googleusercontent.com" },
+      { protocol: "https", hostname: "**.ggpht.com" },
+      { protocol: "https", hostname: "maps.googleapis.com" },
+    ],
+  },
 };
 
 export default nextConfig;

@@ -18,6 +18,7 @@ model Cafe {
   longitude        Float?
   isOpen           Boolean?
   uniquenessScore  Int?
+  photoUrl         String?
   wfcScore         Int?
   vibeDescription  String?
   moodTags         String?

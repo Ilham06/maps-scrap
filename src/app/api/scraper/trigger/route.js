@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 import { acquireLock, releaseLock } from "@/lib/redis";
 import { scrapeCafes } from "@/lib/scraper";
 import { analyzeCafeBatch } from "@/lib/openai";
-import { SUPPORTED_CITIES } from "@/lib/constants";
 
 export async function POST(request) {
   const body = await request.json();
@@ -11,11 +10,6 @@ export async function POST(request) {
 
   if (!city) {
     return NextResponse.json({ error: "city is required" }, { status: 400 });
-  }
-
-  const validCity = SUPPORTED_CITIES.find((c) => c.id === city);
-  if (!validCity) {
-    return NextResponse.json({ error: "unsupported city" }, { status: 400 });
   }
 
   const cacheHours = parseInt(process.env.CACHE_HOURS || "24");
@@ -63,6 +57,7 @@ async function runScrapeJob(city, lockKey) {
           longitude: cafe.longitude,
           isOpen: cafe.isOpen,
           uniquenessScore: cafe.uniquenessScore,
+          ...(cafe.photoUrl && { photoUrl: cafe.photoUrl }),
         },
         create: {
           name: cafe.name,
@@ -74,6 +69,7 @@ async function runScrapeJob(city, lockKey) {
           longitude: cafe.longitude,
           isOpen: cafe.isOpen,
           uniquenessScore: cafe.uniquenessScore,
+          photoUrl: cafe.photoUrl ?? null,
         },
       });
     }
