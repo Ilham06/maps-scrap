@@ -1,32 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-const CREDITS_KEY = "wfc_credits";
-const INITIAL_CREDITS = 5;
+import { useState, useEffect, useCallback } from "react";
 
 export default function useCredits() {
   const [credits, setCredits] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(CREDITS_KEY);
-    if (stored === null) {
-      localStorage.setItem(CREDITS_KEY, INITIAL_CREDITS.toString());
-      setCredits(INITIAL_CREDITS);
-    } else {
-      setCredits(parseInt(stored, 10));
-    }
+    fetch("/api/credits")
+      .then((r) => r.json())
+      .then(({ credits }) => setCredits(credits))
+      .catch(() => setCredits(5));
   }, []);
 
-  function consume() {
-    const next = Math.max(0, (credits ?? 0) - 1);
-    localStorage.setItem(CREDITS_KEY, next.toString());
-    setCredits(next);
-    return next;
-  }
+  const consume = useCallback(async () => {
+    const res = await fetch("/api/credits", { method: "POST" });
+    const { success, remaining } = await res.json();
+    setCredits(remaining);
+    return success;
+  }, []);
 
   return {
-    credits: credits ?? INITIAL_CREDITS,
+    credits: credits ?? 5,
     isLoaded: credits !== null,
     hasCredits: credits === null || credits > 0,
     consume,

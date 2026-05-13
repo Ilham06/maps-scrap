@@ -30,10 +30,10 @@ export default function Home() {
       .finally(() => setGeocoding(false));
   }, [location, city]);
 
-  function handleFindCafe() {
+  async function handleFindCafe() {
     if (!city || !hasCredits) return;
-    consume();
-    router.push(`/results/${city.slug}`);
+    const success = await consume();
+    if (success) router.push(`/results/${city.slug}`);
   }
 
   const isLoading = geoLoading || geocoding;

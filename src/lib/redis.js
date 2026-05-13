@@ -2,7 +2,7 @@ import Redis from "ioredis";
 
 let redis = null;
 
-function getRedisClient() {
+export function getRedisClient() {
   if (redis) return redis;
 
   try {
